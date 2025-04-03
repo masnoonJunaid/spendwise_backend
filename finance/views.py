@@ -152,4 +152,42 @@ class BudgetView(generics.GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
+class BudgetSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request, month):
+        user = request.user
+        try:
+            # Parse month from URL (expected format: YYYY-MM)
+            year, month = map(int, month.split('-'))
+            start_date = datetime(year, month, 1)
+            end_date = datetime(year, month + 1, 1) if month < 12 else datetime(year + 1, 1, 1)
+
+            # Get user's budget for the given month
+            budget_obj = Budget.objects.filter(user=user, month=start_date.date()).first()
+            budget_amount = budget_obj.amount if budget_obj else 0  # Default to 0 if no budget set
+
+            # Calculate total expenses for the month
+            total_expenses = Transaction.objects.filter(
+                user=user, 
+                transaction_type="expense", 
+                date__gte=start_date, 
+                date__lt=end_date
+            ).aggregate(total=models.Sum('amount'))['total'] or 0  # Default to 0
+
+            # Calculate remaining budget
+            remaining_budget = budget_amount - total_expenses
+            over_budget = total_expenses > budget_amount
+
+            # Response data
+            data = {
+                "month": f"{year}-{month:02d}",
+                "budget": budget_amount,
+                "total_expenses": total_expenses,
+                "remaining_budget": remaining_budget,
+                "over_budget": over_budget
+            }
+            return Response(data, status=200)
+
+        except ValueError:
+            return Response({"error": "Invalid month format. Use YYYY-MM."}, status=400)
