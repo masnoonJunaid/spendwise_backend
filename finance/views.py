@@ -1,11 +1,14 @@
 from rest_framework.permissions import AllowAny
 from rest_framework import viewsets, permissions
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, CategorySerializer, TransactionSerializer
 from .models import Category, Transaction  # Import the Category and Transaction models
+from django.db import models  # Import models for database operations
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -87,3 +90,21 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)  # Auto-assign user when creating a transaction
+
+class FinancialSummaryView(APIView):
+    permission_classes = [IsAuthenticated]  # Only logged-in users can access
+
+    def get(self, request):
+        user = request.user  # Get the logged-in user
+
+        # Calculate total income and expenses
+        total_income = Transaction.objects.filter(user=user, transaction_type="income").aggregate(total=models.Sum("amount"))["total"] or 0
+        total_expense = Transaction.objects.filter(user=user, transaction_type="expense").aggregate(total=models.Sum("amount"))["total"] or 0
+
+        balance = total_income - total_expense  # Remaining balance
+
+        return Response({
+            "total_income": total_income,
+            "total_expense": total_expense,
+            "balance": balance
+        })
