@@ -1,12 +1,13 @@
 from django.urls import path,  include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import UserRegistrationView, UserLoginView, CategoryViewSet
+from .views import UserRegistrationView, UserLoginView, CategoryViewSet, TransactionViewSet
 from django.contrib import admin
 
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
+router.register(r'transactions', TransactionViewSet, basename='transaction') 
 
 
 urlpatterns = [

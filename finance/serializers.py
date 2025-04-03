@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Category
+from .models import Category, Transaction
 
 
 User = get_user_model()  # Ensures we use the correct User model
@@ -51,3 +51,16 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ["id", "name", "category_type"]
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ["id", "user", "category", "amount", "transaction_type", "description", "date"]
+        read_only_fields = ["user"]  # User should be automatically assigned
+
+    def validate(self, data):
+        """Ensure category type matches transaction type."""
+        if data["category"].category_type != data["transaction_type"]:
+            raise serializers.ValidationError("Category type must match transaction type.")
+        return data

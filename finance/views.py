@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, CategorySerializer
-from .models import Category  # Import the Category model
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, CategorySerializer, TransactionSerializer
+from .models import Category, Transaction  # Import the Category and Transaction models
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -65,4 +65,25 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)  #Save category with the logged-in user
+        
 
+class TransactionListCreateView(generics.ListCreateAPIView):
+    serializer_class = TransactionSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Only logged-in users can use this
+
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user)  # Filter transactions for logged-in user
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)  # Assign transaction to logged-in user
+
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    serializer_class = TransactionSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Only authenticated users can use it
+
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user)  # Only fetch user's transactions
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)  # Auto-assign user when creating a transaction
