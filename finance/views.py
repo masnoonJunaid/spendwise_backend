@@ -2,8 +2,8 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken  # ✅ Import JWT token generator
-from .serializers import UserRegistrationSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import UserRegistrationSerializer, UserLoginSerializer
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -28,5 +28,28 @@ class UserRegistrationView(generics.CreateAPIView):
                 "refresh": str(refresh),  # Refresh token
                 "access": str(refresh.access_token),  # Access token
             }, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserLoginView(generics.GenericAPIView):
+    serializer_class = UserLoginSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]  # Get authenticated user
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "message": "Login successful",
+                "access_token": str(refresh.access_token),
+                "refresh_token": str(refresh),
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                }
+            }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
