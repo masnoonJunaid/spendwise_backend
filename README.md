@@ -28,6 +28,7 @@ SpendWise is a personal budget tracking application that helps users manage thei
 │   │   ├── settings.py
 │   │   ├── urls.py
 │   │   ├── wsgi.py
+│   ├──   .env  # Environment variables
 │   ├── .gitIgnore
 │   ├── manage.py  # Django project management script
 │   ├── README.md
@@ -51,7 +52,7 @@ git clone https://github.com/your-username/spendwise.git
 cd spendwise/django_backend
 ```
 
-### 2️⃣ Create .env file and create these variables with credential shared
+### 2️⃣ Create .env file in root directory and add these variables with credential shared
 ```bash
 DATABASE_URL=''
 JWT_SECRET=''
