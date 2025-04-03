@@ -13,3 +13,16 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profile of {self.user.username}"
+    
+class Category(models.Model):
+    CATEGORY_TYPES = (
+        ("income", "Income"),
+        ("expense", "Expense"),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Each user has their own categories
+    name = models.CharField(max_length=100)
+    category_type = models.CharField(max_length=10, choices=CATEGORY_TYPES)  # "income" or "expense"
+
+    def __str__(self):
+        return self.name

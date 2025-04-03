@@ -1,9 +1,11 @@
 from rest_framework.permissions import AllowAny
+from rest_framework import viewsets, permissions
 from django.contrib.auth.models import User
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserRegistrationSerializer, UserLoginSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, CategorySerializer
+from .models import Category  # Import the Category model
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -15,7 +17,7 @@ class UserRegistrationView(generics.CreateAPIView):
         if serializer.is_valid():
             user = serializer.save()
 
-            # ✅ Generate JWT token after successful registration, this token sent in response, this can be updated for 2factor authentication or other verufication methods
+            # Generating JWT token after successful registration, this token sent in response, this can be updated for 2factor authentication or other verufication methods
             refresh = RefreshToken.for_user(user)
 
             return Response({
@@ -53,3 +55,14 @@ class UserLoginView(generics.GenericAPIView):
             }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class CategoryViewSet(viewsets.ModelViewSet):
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAuthenticated]  # Only logged-in users can access
+
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user)  #Users can only see their own categories
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)  #Save category with the logged-in user
+

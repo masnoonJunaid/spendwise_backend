@@ -1,5 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from .models import Category
+
 
 User = get_user_model()  # Ensures we use the correct User model
 
@@ -44,3 +46,8 @@ class UserLoginSerializer(serializers.Serializer):
 
         data["user"] = user  # Store user object for later use
         return data
+    
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["id", "name", "category_type"]
