@@ -6,9 +6,10 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserRegistrationSerializer, UserLoginSerializer, CategorySerializer, TransactionSerializer
-from .models import Category, Transaction  # Import the Category and Transaction models
+from .serializers import UserRegistrationSerializer, UserLoginSerializer, CategorySerializer, TransactionSerializer, BudgetSerializer
+from .models import Category, Transaction, Budget  # Import the Category, Transaction, and Budget models
 from django.db import models  # Import models for database operations
+from datetime import datetime  # Import datetime for date and time operations
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -108,3 +109,47 @@ class FinancialSummaryView(APIView):
             "total_expense": total_expense,
             "balance": balance
         })
+    
+class BudgetView(generics.GenericAPIView):
+    serializer_class = BudgetSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Retrieve the budget for the current month"""
+        current_month = datetime.now().strftime("%Y-%m")
+        budget = Budget.objects.filter(user=request.user, month=current_month).first()
+        if not budget:
+            return Response({"message": "No budget set for this month."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Calculate total expenses for the current month
+        total_expenses = Transaction.objects.filter(
+            user=request.user,
+            transaction_type="expense",
+            date__startswith=current_month
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+
+        remaining_budget = float(budget.amount) - float(total_expenses)
+
+        return Response({
+            "budget": float(budget.amount),
+            "expenses": float(total_expenses),
+            "remaining": remaining_budget
+        })
+
+    def post(self, request):
+        """Set a budget for the current month"""
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            month = serializer.validated_data['month']
+            existing_budget = Budget.objects.filter(user=request.user, month=month).first()
+
+            if existing_budget:
+                return Response({"error": "Budget for this month already exists."}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+

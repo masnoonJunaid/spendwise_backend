@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Category, Transaction
+from .models import Category, Transaction, Budget
 
 
 User = get_user_model()  # Ensures we use the correct User model
@@ -64,3 +64,8 @@ class TransactionSerializer(serializers.ModelSerializer):
         if data["category"].category_type != data["transaction_type"]:
             raise serializers.ValidationError("Category type must match transaction type.")
         return data
+    
+class BudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Budget
+        fields = ['id', 'amount', 'month']

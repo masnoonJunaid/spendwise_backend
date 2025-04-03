@@ -1,7 +1,7 @@
 from django.urls import path,  include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import UserRegistrationView, UserLoginView, CategoryViewSet, TransactionViewSet, FinancialSummaryView
+from .views import UserRegistrationView, UserLoginView, CategoryViewSet, TransactionViewSet, FinancialSummaryView, BudgetView
 from django.contrib import admin
 
 
@@ -15,5 +15,6 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='login'),  # Custom login API
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path("summary/", FinancialSummaryView.as_view(), name="financial-summary"),
+    path('budget/', BudgetView.as_view(), name='budget'),
     path('', include(router.urls)),
 ]
