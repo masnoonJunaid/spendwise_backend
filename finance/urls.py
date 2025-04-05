@@ -1,7 +1,7 @@
 from django.urls import path,  include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import UserRegistrationView, UserLoginView, CategoryViewSet, TransactionViewSet, FinancialSummaryView, BudgetView, BudgetSummaryView
+from .views import UserRegistrationView, UserLoginView, CategoryViewSet, TransactionViewSet, FinancialSummaryView, BudgetView, BudgetSummaryView, LogoutView
 from django.contrib import admin
 
 
@@ -17,5 +17,6 @@ urlpatterns = [
     path("summary/", FinancialSummaryView.as_view(), name="financial-summary"),
     path('budget/', BudgetView.as_view(), name='budget'),
     path("budget-summary/<str:month>/", BudgetSummaryView.as_view(), name="budget_summary"),
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('', include(router.urls)),
 ]

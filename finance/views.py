@@ -10,6 +10,10 @@ from .serializers import UserRegistrationSerializer, UserLoginSerializer, Catego
 from .models import Category, Transaction, Budget  # Import the Category, Transaction, and Budget models
 from django.db import models  # Import models for database operations
 from datetime import datetime  # Import datetime for date and time operations
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from spend_wise.utils.authentication import JWTAuthenticationFromCookie
+
+
 
 class UserRegistrationView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -41,16 +45,16 @@ class UserLoginView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.validated_data["user"]  # Get authenticated user
+            user = serializer.validated_data["user"]
 
             refresh = RefreshToken.for_user(user)
-            return Response({
+            access_token = str(refresh.access_token)
+
+            response = Response({
                 "message": "Login successful",
-                "access_token": str(refresh.access_token),
-                "refresh_token": str(refresh),
                 "user": {
                     "id": user.id,
                     "username": user.username,
@@ -58,7 +62,40 @@ class UserLoginView(generics.GenericAPIView):
                 }
             }, status=status.HTTP_200_OK)
 
+            # Set cookies
+            response.set_cookie(
+                key='access_token',
+                value=access_token,
+                httponly=True,
+                secure=True,  # Set to False for local dev, True for production
+                samesite='Lax',
+                max_age=3600  # 1 hour
+            )
+            response.set_cookie(
+                key='refresh_token',
+                value=str(refresh),
+                httponly=True,
+                secure=True,
+                samesite='Lax',
+                max_age=7 * 24 * 3600  # 7 days
+            )
+
+            return response
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(APIView):
+    authentication_classes = [JWTAuthenticationFromCookie]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        response = Response({"message": "Logout successful"}, status=200)
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        return response
+    
+
     
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer

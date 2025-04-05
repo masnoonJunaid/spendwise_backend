@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
 load_dotenv()
 from urllib.parse import urlparse
 from datetime import timedelta
@@ -46,6 +47,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt.token_blacklist',
+
 ]
 
 MIDDLEWARE = [
@@ -112,16 +115,24 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Update this with your Next.js domain
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_CREDENTIALS = True  # Required when using credentials: 'include'
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "Authorization",  # If you're using auth headers
+    "Content-Type",
+]
+
+# CORS_ALLOW_ALL_ORIGINS = True 
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",  # ✅ Allow public access unless overridden
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'spend_wise.utils.authentication.CookieJWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
 
 
 
@@ -132,6 +143,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": os.getenv("JWT_SECRET"),  # Replace with your actual secret key
+    'TOKEN_BLACKLIST_ENABLED': True,
 }
 
 
