@@ -112,17 +112,24 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Update this with your Next.js domain
+    "http://localhost:3000",  
+    "https://spendwise-ui.vercel.app",  
 ]
 
-CORS_ALLOW_CREDENTIALS = True  # Required when using credentials: 'include'
+CORS_ALLOW_CREDENTIALS = True  
 CORS_ALLOW_ALL_ORIGINS = True
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "https://spendwise-ui.vercel.app",
+]
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
-    "Authorization",  # If you're using auth headers
+    "Authorization",  #
     "Content-Type",
 ]
+
+
 
 # CORS_ALLOW_ALL_ORIGINS = True 
 

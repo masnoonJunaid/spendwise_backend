@@ -68,17 +68,17 @@ class UserLoginView(generics.GenericAPIView):
                 key='access_token',
                 value=access_token,
                 httponly=True,
-                secure=True,  # Set to False for local dev, True for production
-                samesite='Lax',
-                max_age=3600  # 1 hour
+                secure=True,  
+                samesite='None',  # IMPORTANT for cross-origin cookies
+                max_age=36000
             )
             response.set_cookie(
                 key='refresh_token',
                 value=str(refresh),
                 httponly=True,
                 secure=True,
-                samesite='Lax',
-                max_age=7 * 24 * 3600  # 7 days
+                samesite='None',  # IMPORTANT
+                max_age=7 * 24 * 3600
             )
 
             return response
