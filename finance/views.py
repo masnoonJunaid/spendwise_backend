@@ -9,6 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, CategorySerializer, TransactionSerializer, BudgetSerializer
 from .models import Category, Transaction, Budget  # Import the Category, Transaction, and Budget models
 from django.db import models  # Import models for database operations
+from django.db.models import Sum  # Import Sum for aggregation
 from datetime import datetime  # Import datetime for date and time operations
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from spend_wise.utils.authentication import JWTAuthenticationFromCookie
@@ -134,6 +135,7 @@ class FinancialSummaryView(APIView):
 
     def get(self, request):
         user = request.user  # Get the logged-in user
+        print("Current user:", user)
 
         # Calculate total income and expenses
         total_income = Transaction.objects.filter(user=user, transaction_type="income").aggregate(total=models.Sum("amount"))["total"] or 0
@@ -194,14 +196,22 @@ class BudgetSummaryView(APIView):
 
     def get(self, request, month):
         user = request.user
+        print("Current user:", user)
+        print("Requested month:", month)
+        
         try:
             # Parse month from URL (expected format: YYYY-MM)
-            year, month = map(int, month.split('-'))
-            start_date = datetime(year, month, 1)
-            end_date = datetime(year, month + 1, 1) if month < 12 else datetime(year + 1, 1, 1)
+            year, month_num = map(int, month.split('-'))
+            start_date = datetime(year, month_num, 1)
+            end_date = datetime(year, month_num + 1, 1) if month_num < 12 else datetime(year + 1, 1, 1)
 
-            # Get user's budget for the given month
-            budget_obj = Budget.objects.filter(user=user, month=start_date.date()).first()
+            # Get user's budget for the given month (any date within the month)
+            budget_obj = Budget.objects.filter(
+                user=user,
+                month__gte=start_date.date(),
+                month__lt=end_date.date()
+            ).first()
+
             budget_amount = budget_obj.amount if budget_obj else 0  # Default to 0 if no budget set
 
             # Calculate total expenses for the month
@@ -218,10 +228,10 @@ class BudgetSummaryView(APIView):
 
             # Response data
             data = {
-                "month": f"{year}-{month:02d}",
-                "budget": budget_amount,
-                "total_expenses": total_expenses,
-                "remaining_budget": remaining_budget,
+                "month": f"{year}-{month_num:02d}",
+                "budget": float(budget_amount),
+                "total_expenses": float(total_expenses),
+                "remaining_budget": float(remaining_budget),
                 "over_budget": over_budget
             }
             return Response(data, status=200)
