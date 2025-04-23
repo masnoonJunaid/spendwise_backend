@@ -48,8 +48,8 @@ Ensure you have the following installed:
 
 ### 2️⃣ Clone the Repository
 ```bash
-git clone https://github.com/your-username/spendwise.git
-cd spendwise/django_backend
+git clone https://github.com/your-username/spendwise_backend.git
+cd django_backend
 ```
 
 ### 2️⃣ Create .env file in root directory and add these variables with credential shared
